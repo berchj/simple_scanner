@@ -37,10 +37,17 @@ router.post("/buscar_pedido", authToken, (req, res) => {
 });
 
 router.get("/", authToken, (req, res) => {
-  if (!req.user) {
-    res.status(403).json({ error: "invalid credentials" });
-  }
-  res.json({ message: "authenticated successfully" });
+  if (!req.user) res.status(403).json({ error: "invalid credentials" });
+  Pool.getConnection((error, connection) => {
+    if (error) throw error;
+    let q = `show databases`;
+    connection.query(q, (error, rows, fields) => {
+      if (error) throw error;
+      if (rows.length)
+        res.json({ data: rows, message: "authenticated successfully" });
+    });
+    connection.release();
+  });
 });
 
 module.exports = router;

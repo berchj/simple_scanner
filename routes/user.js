@@ -33,14 +33,15 @@ router.post("/login", (req, res) => {
             }
           );
         } else {
-          res.status(404).json({ message: "Not Found" });
+          res.status(404).json({ message: "Not Founded" });
         }
       } else {
-        res.status(400).json({ message: "Not Found" });
+        res.status(400).json({ message: "Not Founded" });
       }
     });
     connection.release();
   });
 });
+
 
 module.exports = router;
