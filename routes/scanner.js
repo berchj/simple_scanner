@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Pool = require("../lib/pool");
+const PoolExtra = require('../lib/pool_extra_stuff')
 
 function authToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -38,16 +39,20 @@ router.post("/buscar_pedido", authToken, (req, res) => {
 
 router.get("/", authToken, (req, res) => {
   if (!req.user) res.status(403).json({ error: "invalid credentials" });
-  Pool.getConnection((error, connection) => {
-    if (error) throw error;
-    let q = `show databases`;
+  PoolExtra.getConnection((error, connection) => {
+    if (error) throw error
+    let q = `show tables`
     connection.query(q, (error, rows, fields) => {
-      if (error) throw error;
-      if (rows.length)
+      if (error) throw error
+      if (rows) {
         res.json({ data: rows, message: "authenticated successfully" });
-    });
-    connection.release();
-  });
+      } else {
+        res.json({ error: 'not founded on query' })
+      }
+    })
+    connection.release()
+  })
 });
+
 
 module.exports = router;
