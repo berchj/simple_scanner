@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Pool = require("../lib/pool");
-const PoolExtra = require('../lib/pool_extra_stuff')
+const PoolExtra = require("../lib/pool_extra_stuff");
 
 function authToken(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -40,19 +40,72 @@ router.post("/buscar_pedido", authToken, (req, res) => {
 router.get("/", authToken, (req, res) => {
   if (!req.user) res.status(403).json({ error: "invalid credentials" });
   PoolExtra.getConnection((error, connection) => {
-    if (error) throw error
-    let q = `show tables`
+    if (error) throw error;
+    let q = `show tables`;
     connection.query(q, (error, rows, fields) => {
-      if (error) throw error
+      if (error) throw error;
       if (rows) {
-        res.json({ data: rows, message: "authenticated successfully" });
+        res.json({
+          user: req.user,
+          data: rows,
+          message: "authenticated successfully",
+        });
       } else {
-        res.json({ error: 'not founded on query' })
+        res.json({ error: "not founded on query" });
       }
-    })
-    connection.release()
-  })
+    });
+    connection.release();
+  });
 });
 
+router.post("/save", authToken, (req, res) => {
+  PoolExtra.getConnection((error, connection) => {
+    if (error) throw error;
+    let q = `select * from new_table where num_pedido = ${connection.escape(
+      req.body.num_pedido
+    )}`;
+    connection.query(q, (error, rows, fields) => {
+      if (error) throw error;
+      if (rows.length) {
+        res.status(200).json({ message: "Pedido anteriormente registrado" });
+      } else {
+        var q1 = `insert into new_table (fecha_hora,col_nombre_scan,num_pedido,consol,transporte,num_guia,peso,bulto,usuario) values (${connection.escape(
+          req.body.fecha_hora
+        )},${connection.escape(req.body.col_nombre_scan)},${connection.escape(
+          req.body.num_pedido
+        )},${connection.escape(req.body.consol)},${connection.escape(
+          req.body.transporte
+        )},${connection.escape(req.body.num_guia)},${connection.escape(
+          req.body.peso
+        )},${connection.escape(req.body.bulto)},${connection.escape(
+          req.body.usuario
+        )})`;
+        connection.query(q1, (error, rows, fields) => {
+          if (error) throw error;
+          res
+            .status(201)
+            .json({ message: "order registered successfully", data: rows });
+        });
+      }
+    });
+    connection.release();
+  });
+});
+
+router.get("/orders", authToken, (req, res) => {
+  PoolExtra.getConnection((error, connection) => {
+    if (error) throw error;
+    let q = `select * from new_table`
+    connection.query(q,(error,rows,fields) => {
+      if (error) throw error;
+      if(rows.length){
+        res.status(200).json({ data : rows })
+      }else{
+        res.status(404).json({ error: 'resource not found'})
+      }
+    })
+    connection.release();
+  });
+});
 
 module.exports = router;
